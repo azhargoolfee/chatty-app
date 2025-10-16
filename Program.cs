@@ -12,16 +12,22 @@ builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // Configure database: PostgreSQL for production, SQLite for development
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-var usePostgreSQL = !string.IsNullOrWhiteSpace(databaseUrl);
+Console.WriteLine($"DATABASE_URL exists: {databaseUrl != null}");
+Console.WriteLine($"DATABASE_URL value: '{databaseUrl ?? "NULL"}'");
+Console.WriteLine($"DATABASE_URL length: {databaseUrl?.Length ?? 0}");
+
+var usePostgreSQL = !string.IsNullOrWhiteSpace(databaseUrl) && databaseUrl.StartsWith("postgresql://");
 
 string connectionString;
 if (usePostgreSQL)
 {
     connectionString = databaseUrl!;
+    Console.WriteLine("Using PostgreSQL");
 }
 else
 {
     connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db";
+    Console.WriteLine($"Using SQLite with: {connectionString}");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

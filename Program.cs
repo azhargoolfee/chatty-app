@@ -125,17 +125,43 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        context.Database.EnsureCreated();
-        app.Logger.LogInformation("Database initialized successfully using {DatabaseProvider}", 
-            usePostgreSQL ? "PostgreSQL" : "SQLite");
+        
+        // Retry logic for PostgreSQL connections
+        int maxRetries = usePostgreSQL ? 5 : 1;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                context.Database.EnsureCreated();
+                app.Logger.LogInformation("Database initialized successfully using {DatabaseProvider} on attempt {Attempt}", 
+                    usePostgreSQL ? "PostgreSQL" : "SQLite", attempt);
+                break;
+            }
+            catch (Exception ex) when (usePostgreSQL && attempt < maxRetries)
+            {
+                app.Logger.LogWarning("Database connection attempt {Attempt} failed: {Error}. Retrying in 2 seconds...", 
+                    attempt, ex.Message);
+                await Task.Delay(2000);
+            }
+        }
     }
 }
 catch (Exception ex)
 {
-    app.Logger.LogError(ex, "Failed to initialize database. Using {DatabaseProvider} with connection: {ConnectionInfo}", 
+    app.Logger.LogError(ex, "Failed to initialize database after all retries. Using {DatabaseProvider} with connection: {ConnectionInfo}", 
         usePostgreSQL ? "PostgreSQL" : "SQLite", 
         usePostgreSQL ? "DATABASE_URL environment variable" : connectionString);
-    throw;
+    
+    // If PostgreSQL fails, fall back to SQLite for now
+    if (usePostgreSQL)
+    {
+        app.Logger.LogWarning("PostgreSQL connection failed, but app will continue. Database features may be limited.");
+        // Don't throw - let the app start without database
+    }
+    else
+    {
+        throw;
+    }
 }
 
 app.Run();

@@ -26,6 +26,9 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
+# Copy the Frontend folder separately
+COPY --from=build /src/Frontend ./Frontend
+
 # Railway provides the PORT environment variable
 ENV ASPNETCORE_URLS=http://+:$PORT
 

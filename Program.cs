@@ -56,19 +56,27 @@ else
 
 app.UseHttpsRedirection();
 
-app.UseDefaultFiles(new DefaultFilesOptions
+// Configure static files - check if Frontend folder exists
+var frontendPath = Path.Combine(builder.Environment.ContentRootPath, "Frontend");
+if (Directory.Exists(frontendPath))
 {
-    DefaultFileNames = new List<string> { "index.html" },
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Frontend"))
-});
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        DefaultFileNames = new List<string> { "index.html" },
+        FileProvider = new PhysicalFileProvider(frontendPath)
+    });
 
-app.UseStaticFiles(new StaticFileOptions
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(frontendPath),
+        RequestPath = ""
+    });
+}
+else
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "Frontend")),
-    RequestPath = ""
-});
+    // Fallback: serve a simple message if Frontend folder is missing
+    app.UseStaticFiles();
+}
 
 app.UseRouting();
 app.UseCors();

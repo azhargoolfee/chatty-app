@@ -10,10 +10,24 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db";
+// Configure database: PostgreSQL for production, SQLite for development
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? 
+                      builder.Configuration.GetConnectionString("DefaultConnection") ?? 
+                      "Data Source=app.db";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
+{
+    if (Environment.GetEnvironmentVariable("DATABASE_URL") != null)
+    {
+        // Production: Use PostgreSQL
+        options.UseNpgsql(connectionString);
+    }
+    else
+    {
+        // Development: Use SQLite
+        options.UseSqlite(connectionString);
+    }
+});
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

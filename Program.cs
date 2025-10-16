@@ -11,13 +11,22 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // Configure database: PostgreSQL for production, SQLite for development
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") ?? 
-                      builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-                      "Data Source=app.db";
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var usePostgreSQL = !string.IsNullOrWhiteSpace(databaseUrl);
+
+string connectionString;
+if (usePostgreSQL)
+{
+    connectionString = databaseUrl!;
+}
+else
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db";
+}
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (Environment.GetEnvironmentVariable("DATABASE_URL") != null)
+    if (usePostgreSQL)
     {
         // Production: Use PostgreSQL
         options.UseNpgsql(connectionString);
@@ -105,10 +114,22 @@ app.MapControllerRoute(
 app.MapHub<ChatHub>("/chatHub");
 
 // Ensure database is created and migrated
-using (var scope = app.Services.CreateScope())
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        context.Database.EnsureCreated();
+        app.Logger.LogInformation("Database initialized successfully using {DatabaseProvider}", 
+            usePostgreSQL ? "PostgreSQL" : "SQLite");
+    }
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Failed to initialize database. Using {DatabaseProvider} with connection: {ConnectionInfo}", 
+        usePostgreSQL ? "PostgreSQL" : "SQLite", 
+        usePostgreSQL ? "DATABASE_URL environment variable" : connectionString);
+    throw;
 }
 
 app.Run();

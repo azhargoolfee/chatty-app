@@ -21,7 +21,19 @@ var usePostgreSQL = !string.IsNullOrWhiteSpace(databaseUrl) && databaseUrl.Start
 string connectionString;
 if (usePostgreSQL)
 {
-    connectionString = databaseUrl!;
+    // Convert Railway DATABASE_URL to Npgsql connection string format
+    try
+    {
+        var uri = new Uri(databaseUrl!);
+        connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};";
+        Console.WriteLine($"Converted PostgreSQL connection string: Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password=***");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to parse DATABASE_URL: {ex.Message}");
+        usePostgreSQL = false;
+        connectionString = "Data Source=app.db";
+    }
     Console.WriteLine("Using PostgreSQL");
 }
 else

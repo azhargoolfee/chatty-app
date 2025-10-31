@@ -1,9 +1,7 @@
-// Authentication functions
-
 function showLogin() {
-    const mainContent = document.getElementById('mainContent');
-    
-    mainContent.innerHTML = `
+  const mainContent = document.getElementById("mainContent");
+
+  mainContent.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-md w-full space-y-8">
                 <div>
@@ -63,9 +61,9 @@ function showLogin() {
 }
 
 function showRegister() {
-    const mainContent = document.getElementById('mainContent');
-    
-    mainContent.innerHTML = `
+  const mainContent = document.getElementById("mainContent");
+
+  mainContent.innerHTML = `
         <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-md w-full space-y-8">
                 <div>
@@ -123,109 +121,109 @@ function showRegister() {
 }
 
 async function handleLogin(event) {
-    event.preventDefault();
-    
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const rememberMe = document.getElementById('rememberMe').checked;
-    
-    try {
-        const response = await fetch('/api/account/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                email,
-                password,
-                rememberMe
-            })
-        });
+  event.preventDefault();
 
-        if (response.ok) {
-            const result = await response.json();
-            app.currentUser = result.user;
-            app.isAuthenticated = true;
-            updateNavigation();
-            showNotification('Login successful!', 'success');
-            showHome();
-        } else {
-            const error = await response.json();
-            showLoginError(error.message || 'Invalid login attempt.');
-        }
-    } catch (error) {
-        showLoginError('Login failed. Please try again.');
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+  const rememberMe = document.getElementById("rememberMe").checked;
+
+  try {
+    const response = await fetch("/api/account/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        email,
+        password,
+        rememberMe,
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      app.currentUser = result.user;
+      app.isAuthenticated = true;
+      updateNavigation();
+      showNotification("Login successful!", "success");
+      showHome();
+    } else {
+      const error = await response.json();
+      showLoginError(error.message || "Invalid login attempt.");
     }
+  } catch (error) {
+    showLoginError("Login failed. Please try again.");
+  }
 }
 
 async function handleRegister(event) {
-    event.preventDefault();
-    
-    const email = document.getElementById('registerEmail').value;
-    const password = document.getElementById('registerPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    if (password !== confirmPassword) {
-        showRegisterError('Passwords do not match.');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/account/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                email,
-                password,
-                confirmPassword
-            })
-        });
+  event.preventDefault();
 
-        if (response.ok) {
-            const result = await response.json();
-            app.currentUser = result.user;
-            app.isAuthenticated = true;
-            updateNavigation();
-            showNotification('Registration successful!', 'success');
-            showHome();
-        } else {
-            const error = await response.json();
-            showRegisterError(error.message || 'Registration failed.');
-        }
-    } catch (error) {
-        showRegisterError('Registration failed. Please try again.');
+  const email = document.getElementById("registerEmail").value;
+  const password = document.getElementById("registerPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  if (password !== confirmPassword) {
+    showRegisterError("Passwords do not match.");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/account/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        email,
+        password,
+        confirmPassword,
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      app.currentUser = result.user;
+      app.isAuthenticated = true;
+      updateNavigation();
+      showNotification("Registration successful!", "success");
+      showHome();
+    } else {
+      const error = await response.json();
+      showRegisterError(error.message || "Registration failed.");
     }
+  } catch (error) {
+    showRegisterError("Registration failed. Please try again.");
+  }
 }
 
 async function logout() {
-    try {
-        const response = await fetch('/api/account/logout', {
-            method: 'POST',
-            credentials: 'include'
-        });
+  try {
+    const response = await fetch("/api/account/logout", {
+      method: "POST",
+      credentials: "include",
+    });
 
-        app.currentUser = null;
-        app.isAuthenticated = false;
-        updateNavigation();
-        showNotification('Logged out successfully!', 'success');
-        showHome();
-    } catch (error) {
-        console.error('Logout error:', error);
-    }
+    app.currentUser = null;
+    app.isAuthenticated = false;
+    updateNavigation();
+    showNotification("Logged out successfully!", "success");
+    showHome();
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
 }
 
 function showLoginError(message) {
-    const errorDiv = document.getElementById('loginError');
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('hidden');
+  const errorDiv = document.getElementById("loginError");
+  errorDiv.textContent = message;
+  errorDiv.classList.remove("hidden");
 }
 
 function showRegisterError(message) {
-    const errorDiv = document.getElementById('registerError');
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('hidden');
+  const errorDiv = document.getElementById("registerError");
+  errorDiv.textContent = message;
+  errorDiv.classList.remove("hidden");
 }

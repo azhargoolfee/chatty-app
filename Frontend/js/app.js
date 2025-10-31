@@ -1,17 +1,13 @@
-// Global application state
 const app = {
   currentUser: null,
   isAuthenticated: false,
   apiBase: "http://localhost:5026/api",
 };
 
-// Initialize the application
 document.addEventListener("DOMContentLoaded", function () {
   checkAuthStatus();
   showHome();
 });
-
-// Check if user is authenticated
 async function checkAuthStatus() {
   try {
     const response = await fetch("/api/account/profile", {
@@ -34,7 +30,6 @@ async function checkAuthStatus() {
   }
 }
 
-// Update navigation based on auth status
 function updateNavigation() {
   const navAuth = document.getElementById("navAuth");
   const chatLink = document.getElementById("chatLink");
@@ -58,7 +53,6 @@ function updateNavigation() {
   }
 }
 
-// Navigation functions
 function showHome() {
   const mainContent = document.getElementById("mainContent");
 
@@ -106,7 +100,6 @@ function showHome() {
   }
 }
 
-// Utility function to show notifications
 function showNotification(message, type = "info") {
   const notification = document.createElement("div");
   notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg text-white z-50 ${

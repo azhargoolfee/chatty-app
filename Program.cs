@@ -6,52 +6,39 @@ using ChattyApp.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure for Railway deployment
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
-// Configure database: PostgreSQL for production, SQLite for development
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-Console.WriteLine($"DATABASE_URL exists: {databaseUrl != null}");
-Console.WriteLine($"DATABASE_URL value: '{databaseUrl ?? "NULL"}'");
-Console.WriteLine($"DATABASE_URL length: {databaseUrl?.Length ?? 0}");
-
 var usePostgreSQL = !string.IsNullOrWhiteSpace(databaseUrl) && databaseUrl.StartsWith("postgresql://");
 
 string connectionString;
 if (usePostgreSQL)
 {
-    // Convert Railway DATABASE_URL to Npgsql connection string format
     try
     {
         var uri = new Uri(databaseUrl!);
         connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password={uri.UserInfo.Split(':')[1]};";
-        Console.WriteLine($"Converted PostgreSQL connection string: Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.Trim('/')};Username={uri.UserInfo.Split(':')[0]};Password=***");
     }
-    catch (Exception ex)
+    catch (Exception)
     {
-        Console.WriteLine($"Failed to parse DATABASE_URL: {ex.Message}");
         usePostgreSQL = false;
         connectionString = "Data Source=app.db";
     }
-    Console.WriteLine("Using PostgreSQL");
 }
 else
 {
     connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=app.db";
-    Console.WriteLine($"Using SQLite with: {connectionString}");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (usePostgreSQL)
     {
-        // Production: Use PostgreSQL
         options.UseNpgsql(connectionString);
     }
     else
     {
-        // Development: Use SQLite
         options.UseSqlite(connectionString);
     }
 });
@@ -97,7 +84,6 @@ else
 
 app.UseHttpsRedirection();
 
-// Configure static files - check if Frontend folder exists
 var frontendPath = Path.Combine(builder.Environment.ContentRootPath, "Frontend");
 if (Directory.Exists(frontendPath))
 {
@@ -115,7 +101,6 @@ if (Directory.Exists(frontendPath))
 }
 else
 {
-    // Fallback: serve a simple message if Frontend folder is missing
     app.UseStaticFiles();
 }
 
@@ -131,14 +116,12 @@ app.MapControllerRoute(
 
 app.MapHub<ChatHub>("/chatHub");
 
-// Ensure database is created and migrated
 try
 {
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         
-        // Retry logic for PostgreSQL connections
         int maxRetries = usePostgreSQL ? 5 : 1;
         for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
@@ -164,11 +147,9 @@ catch (Exception ex)
         usePostgreSQL ? "PostgreSQL" : "SQLite", 
         usePostgreSQL ? "DATABASE_URL environment variable" : connectionString);
     
-    // If PostgreSQL fails, fall back to SQLite for now
     if (usePostgreSQL)
     {
         app.Logger.LogWarning("PostgreSQL connection failed, but app will continue. Database features may be limited.");
-        // Don't throw - let the app start without database
     }
     else
     {

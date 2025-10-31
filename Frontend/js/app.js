@@ -80,7 +80,7 @@ function showHome() {
             <div class="text-center py-12">
                 <h1 class="text-5xl font-bold text-gray-900 mb-4">
                     <i class="fas fa-comments text-primary mr-4"></i>
-                    Welcome to Chatty
+                    Welcome to Azhar's Chatty
                 </h1>
                 <p class="text-xl text-gray-600 mb-8">Connect with others in real-time chat!</p>
                 
